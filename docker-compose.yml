@@ -1,0 +1,42 @@
+services:
+    nginx:
+      image: nginx:latest
+      volumes:
+        - ./src:/var/www/
+        - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+      ports:
+        - 8080:80
+      depends_on:
+        - php
+      container_name: nginx
+
+    php:
+      build:
+        context: ./docker/php
+      volumes:
+        - ./src:/var/www
+      working_dir: /var/www
+      depends_on:
+        - mysql
+      container_name: php
+
+    mysql:
+      image: mysql:latest
+      volumes:
+          - ./docker/mysql:/var/lib/mysql
+      environment:
+          MYSQL_ROOT_PASSWORD: root
+      ports:
+          - 9090:3306
+      container_name: mysql
+
+    phpmyadmin:
+      image: phpmyadmin
+      ports:
+          - 8081:80
+      environment:
+          - PMA_HOST=mysql
+          - PMA_PORT=3306
+      depends_on:
+          - mysql
+      container_name: phpmyadmin
