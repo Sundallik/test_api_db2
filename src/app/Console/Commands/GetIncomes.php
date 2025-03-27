@@ -2,25 +2,24 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Stock;
+use App\Models\Income;
 use App\Services\Api\FetchApiService;
-use Carbon\Carbon;
 
-class GetStocks extends BaseApiCommand
+class GetIncomes extends BaseApiCommand
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'get:stocks {api_service_id} {account_id}';
+    protected $signature = 'get:incomes {dateFrom} {dateTo} {api_service_id} {account_id}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Get stocks from API';
+    protected $description = 'Get incomes from API';
 
     /**
      * Execute the console command.
@@ -29,18 +28,21 @@ class GetStocks extends BaseApiCommand
     {
         $params = $this->getAndValidateParams(
             $this->argument('api_service_id'),
-            $this->argument('account_id')
+            $this->argument('account_id'),
+            $this->argument('dateFrom'),
+            $this->argument('dateTo')
         );
 
         FetchApiService::fetchData(
             $params['apiService'],
             $params['account'],
-            '/api/stocks',
+            '/api/incomes',
             [
-                'dateFrom' => Carbon::now()->format('Y-m-d'),
+                'dateFrom' => $params['dateFrom'],
+                'dateTo' => $params['dateTo'],
                 'key' => $params['apiToken']->token,
             ],
-            Stock::class
+            Income::class
         );
 
         $this->info('Import finished');

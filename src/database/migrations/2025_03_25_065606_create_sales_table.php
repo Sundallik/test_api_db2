@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->string('g_number')->unique();
+            $table->string('g_number')->nullable();
             $table->date('date')->nullable();
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
@@ -43,7 +43,7 @@ return new class extends Migration
 
             $table->foreignId('account_id')->constrained('accounts');
 
-            $table->unique(['g_number', 'date', 'last_change_date', 'income_id', 'sale_id', 'account_id'], 'main_unique_index');
+//            $table->unique(['g_number', 'account_id']);
         });
     }
 

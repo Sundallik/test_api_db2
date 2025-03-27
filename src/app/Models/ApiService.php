@@ -18,5 +18,4 @@ class ApiService extends Model
     {
         return $this->hasMany(ApiToken::class);
     }
-
 }

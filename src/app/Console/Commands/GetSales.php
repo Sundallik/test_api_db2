@@ -2,21 +2,17 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Account;
-use App\Services\Api\ApiService;
-use App\Services\Api\SalesService;
-use Illuminate\Console\Command;
+use App\Models\Sale;
+use App\Services\Api\FetchApiService;
 
-class GetSales extends Command
+class GetSales extends BaseApiCommand
 {
-    use ValidateAccount;
-
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'get:sales {dateFrom} {dateTo} {account_id}';
+    protected $signature = 'get:sales {dateFrom} {dateTo} {api_service_id} {account_id}';
 
     /**
      * The console command description.
@@ -28,16 +24,28 @@ class GetSales extends Command
     /**
      * Execute the console command.
      */
-    public function handle(SalesService $salesService)
+    public function handle()
     {
-        $dateFrom = $this->argument('dateFrom');
-        $dateTo = $this->argument('dateTo');
-        $accountId = $this->argument('account_id');
+        $params = $this->getAndValidateParams(
+            $this->argument('api_service_id'),
+            $this->argument('account_id'),
+            $this->argument('dateFrom'),
+            $this->argument('dateTo')
+        );
 
-        $this->validateAccount();
-
-        $salesService->getSales($dateFrom, $dateTo, $accountId);
+        FetchApiService::fetchData(
+            $params['apiService'],
+            $params['account'],
+            '/api/sales',
+            [
+                'dateFrom' => $params['dateFrom'],
+                'dateTo' => $params['dateTo'],
+                'key' => $params['apiToken']->token,
+            ],
+            Sale::class
+        );
 
         $this->info('Import finished');
+        exit(0);
     }
 }

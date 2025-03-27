@@ -39,7 +39,7 @@ class CreateApiToken extends Command
         }
 
         if (!$apiService->tokenTypes()->where('token_type_id', $tokenType->id)->exists()) {
-            $this->error("Token type {$tokenType->name} is not allowed for API service {$apiService->name}");
+            $this->error("Token type \"$tokenType->type\" is not allowed for API service \"$apiService->name\"");
             exit(1);
         }
 

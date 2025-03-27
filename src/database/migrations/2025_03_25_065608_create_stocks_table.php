@@ -35,7 +35,7 @@ return new class extends Migration
 
             $table->foreignId('account_id')->constrained('accounts');
 
-            $table->unique(['date', 'last_change_date', 'supplier_article', 'barcode', 'nm_id', 'account_id'], 'main_unique_index');
+//            $table->unique(['supplier_article', 'account_id']);
         });
     }
 

@@ -28,7 +28,7 @@ return new class extends Migration
 
             $table->foreignId('account_id')->constrained('accounts');
 
-            $table->unique(['income_id', 'date', 'last_change_date', 'nm_id', 'account_id'], 'main_unique_index');
+//            $table->unique(['income_id', 'account_id']);
         });
     }
 
