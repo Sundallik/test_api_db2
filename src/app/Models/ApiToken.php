@@ -9,6 +9,8 @@ class ApiToken extends Model
     protected $table = 'api_tokens';
     protected $guarded = ['id'];
 
+    protected $with = ['apiService'];
+
     public function account()
     {
         return $this->belongsTo(Account::class);

@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->date('date')->nullable();
+            $table->date('date')->index()->nullable();
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
             $table->string('tech_size')->nullable();
-            $table->bigInteger('barcode')->nullable();
+            $table->bigInteger('barcode')->index()->nullable();
             $table->integer('quantity')->default(0)->nullable();
             $table->boolean('is_supply')->default(true)->nullable();
             $table->boolean('is_realization')->default(false)->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
 
             $table->foreignId('account_id')->constrained('accounts');
 
-//            $table->unique(['supplier_article', 'account_id']);
+            $table->unique(['supplier_article', 'account_id']);
         });
     }
 

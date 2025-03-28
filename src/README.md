@@ -29,3 +29,4 @@ create:api-token 1 1 1 "E6kUTYrYwZq2tN4QEtyzsbEBk3ie"
 
 - php artisan schedule:list
 - php artisan schedule:work
+- php artisan schedule:run

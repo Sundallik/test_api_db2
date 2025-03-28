@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('g_number')->nullable();
-            $table->dateTime('date')->nullable();
+            $table->string('g_number')->index()->nullable();
+            $table->dateTime('date')->index()->nullable();
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
             $table->string('tech_size')->nullable();
@@ -34,7 +34,7 @@ return new class extends Migration
 
             $table->foreignId('account_id')->constrained('accounts');
 
-//            $table->unique(['g_number', 'account_id']);
+            $table->unique(['g_number', 'account_id']);
         });
     }
 

@@ -46,6 +46,6 @@ class GetIncomes extends BaseApiCommand
         );
 
         $this->info('Import finished');
-        exit(0);
+//        exit(0);
     }
 }

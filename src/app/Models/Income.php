@@ -6,26 +6,26 @@ use Illuminate\Database\Eloquent\Model;
 
 class Income extends Model
 {
-//    use ColumnsForUpsert;
+    use ColumnsForUpsert;
 
     protected $table = 'incomes';
     protected $guarded = ['id'];
     public $timestamps = false;
 
-//    private static $uniqueColumns = ['income_id', 'account_id'];
-//    private static $updatableColumns = [
-//        'number',
-//        'date',
-//        'last_change_date',
-//        'supplier_article',
-//        'tech_size',
-//        'barcode',
-//        'quantity',
-//        'total_price',
-//        'date_close',
-//        'warehouse_name',
-//        'nm_id',
-//        'account_id'
-//    ];
+    private static $uniqueColumn = 'income_id';
+    private static $updatableColumns = [
+        'number',
+        'date',
+        'last_change_date',
+        'supplier_article',
+        'tech_size',
+        'quantity',
+        'barcode',
+        'total_price',
+        'date_close',
+        'warehouse_name',
+        'nm_id',
+        'account_id'
+    ];
 }
 

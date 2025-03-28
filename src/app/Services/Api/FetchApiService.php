@@ -4,11 +4,10 @@ namespace App\Services\Api;
 
 use App\Models\Account;
 use App\Models\ApiService;
-use App\Models\ApiToken;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Database\Eloquent\Model;
 use Psr\Http\Message\ResponseInterface;
 
 class FetchApiService
@@ -27,8 +26,7 @@ class FetchApiService
         $page = 1;
         $retryCount = 0;
         $currentDelay = self::initialDelay;
-
-        $model::where('account_id', $account->id)->delete();
+        $uniqueColumn = $model::getUniqueColumn();
 
         do {
             self::checkRetries($retryCount);
@@ -43,17 +41,34 @@ class FetchApiService
 
                 $data = self::fetchResponse($response, $account);
 
-                if (!empty($data['data'])) {
-                    $model::insert($data['data']);
-//                    $model::upsert(
-//                        $data['data'],
-//                        $model::getUniqueColumns(),
-//                        $model::getUpdatableColumns()
-//                    );
-                }
+                $groupedLatest = collect($data['data'])
+                    ->groupBy($uniqueColumn)
+                    ->map(function ($group) {
+                        return $group->map(function ($item) {
+                            $item['date'] = Carbon::parse($item['date']);
+                            return $item;
+                        })
+                        ->sortBy('date')->last();
+                    });
 
-                self::printLog($model, $data, $page);
+                $existingRecords = $model::whereIn($uniqueColumn, $groupedLatest->pluck($uniqueColumn))
+                    ->where('account_id', $account->id)->get()->keyBy($uniqueColumn);
 
+                $recordsToUpsert = $groupedLatest->filter(function ($item) use ($existingRecords, $uniqueColumn) {
+                    $key = $item[$uniqueColumn];
+                    if (!$existingRecords->has($key)) return true;
+                    return $item['date']->gte($existingRecords->get($key)->date);
+                })->toArray();
+
+                if (!empty($recordsToUpsert)) {
+                    $model::upsert(
+                        $recordsToUpsert,
+                        [$uniqueColumn, 'account_id'],
+                        $model::getUpdatableColumns()
+                    );
+                };
+
+                self::printLog($model, $data, $page, $account, $apiService);
                 $page++;
             } catch (GuzzleException $e) {
                 if ($e->getCode() === 429) {
@@ -108,11 +123,11 @@ class FetchApiService
         return $data;
     }
 
-    private static function printLog(string $model, array $data, int $page)
+    private static function printLog(string $model, array $data, int $page, Account $account, ApiService $apiService)
     {
         $name = class_basename($model);
         $pageCount = $data['meta']['last_page'];
-        print_r("$name: page $page of $pageCount imported successfully" . PHP_EOL);
+        print_r("$name: page $page of $pageCount imported successfully ($account->name, $apiService->name)" . PHP_EOL);
     }
 }
 
