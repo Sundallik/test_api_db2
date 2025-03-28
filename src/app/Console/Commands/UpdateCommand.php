@@ -38,6 +38,9 @@ class UpdateCommand extends Command
                         $this->call('get:orders', [...$timings, ...$this->getInfo($apiToken->api_service_id, $account->id)]);
                         $this->call('get:stocks', [...$this->getInfo($apiToken->api_service_id, $account->id)]);
                         break;
+                    case 'http://109.73.206.144:6969':
+                        $this->call('get:stocks', [...$this->getInfo($apiToken->api_service_id, $account->id)]);
+                        break;
                 }
             }
         }
