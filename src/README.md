@@ -4,12 +4,12 @@
 create:company "Example Inc."
 
 **create:account {company_id} {name}** \
-create:account 1 "Main Account"
+create:account 1 "Admin"
 
 **create:api-service {name} {base_url}** \
-create:api-service "Test API" "http://89.108.115.241:6969"
+create:api-service "Test API" http://109.73.206.144:6969
 
-**create:token-type {type}** \
+**create:token-type {name}** \
 create:token-type "api_key"
 
 **attach:token-type-to-api-service {api_service_id} {token_type_id}** \
@@ -27,6 +27,6 @@ create:api-token 1 1 1 "E6kUTYrYwZq2tN4QEtyzsbEBk3ie"
 
 ### Для запуска автообновления:
 
-- php artisan schedule:list
-- php artisan schedule:work
 - php artisan schedule:run
+
+Вместе с docker-container запускается контейнер "cron" с командой.

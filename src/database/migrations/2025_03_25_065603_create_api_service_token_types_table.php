@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('api_service_token_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('api_service_id')->constrained('api_services')->onDelete('cascade');
-            $table->foreignId('token_type_id')->constrained('token_types')->onDelete('cascade');
+            $table->foreignId('api_service_id')->index()->constrained('api_services')->onDelete('cascade');
+            $table->foreignId('token_type_id')->index()->constrained('token_types')->onDelete('cascade');
             $table->unique(['api_service_id', 'token_type_id']);
         });
     }

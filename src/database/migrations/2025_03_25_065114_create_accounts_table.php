@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('company_id')->constrained('companies')->onDelete('restrict');
+            $table->foreignId('company_id')->index()->constrained('companies')->onDelete('restrict');
             $table->string('name');
             $table->timestamps();
+
+            $table->unique(['company_id', 'name']);
         });
     }
 

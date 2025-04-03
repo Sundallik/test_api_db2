@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Api;
+namespace App\Services;
 
 use App\Models\Account;
 use App\Models\ApiService;
@@ -12,32 +12,38 @@ use Psr\Http\Message\ResponseInterface;
 
 class FetchApiService
 {
-    const maxRetries = 10;
-    const initialDelay = 10;
-
     public static function fetchData(
         ApiService $apiService,
         Account $account,
         string $endpoint,
         array  $queryParams,
-        string $model
+        string $model,
+        int $maxRetries = 10,
+        int $initialDelay = 10,
     )
     {
         $page = 1;
         $retryCount = 0;
-        $currentDelay = self::initialDelay;
+        $currentDelay = $initialDelay;
         $uniqueColumn = $model::getUniqueColumn();
 
         do {
-            self::checkRetries($retryCount);
+            self::checkRetries($retryCount, $maxRetries);
             $client = self::createClient($apiService);
 
             try {
                 $queryParams['page'] = $page;
-                $response = $client->get($endpoint, ['query' => $queryParams]);
+
+                $response = $client->get($endpoint, [
+                    'query' => $queryParams,
+                    'http_errors' => true,
+                    'headers' => [
+                        'Accept' => 'application/json'
+                    ],
+                ]);
 
                 $retryCount = 0;
-                $currentDelay = self::initialDelay;
+                $currentDelay = $initialDelay;
 
                 $data = self::fetchResponse($response, $account);
 
@@ -71,13 +77,18 @@ class FetchApiService
                 self::printLog($model, $data, $page, $account, $apiService);
                 $page++;
             } catch (GuzzleException $e) {
-                if ($e->getCode() === 429) {
-                    sleep($currentDelay);
-                    $retryCount++;
-                    print_r("Too many requests (429), retry $retryCount: $currentDelay sec" . PHP_EOL);
-                    $currentDelay *= 2;
-                } else {
-                    self::fetchErrors($e);
+                switch($e->getCode()) {
+                    case 400:
+                        print_r("Invalid parameters" . PHP_EOL);
+                        return;
+                    case 429:
+                        $retryCount++;
+                        print_r("Too many requests (429), retry $retryCount: $currentDelay sec" . PHP_EOL);
+                        sleep($currentDelay);
+                        if ($currentDelay <= 1000) $currentDelay *= 2;
+                        break;
+                    default:
+                        self::fetchErrors($e);
                 }
             }
         } while (isset($data['links']['next']));
@@ -93,6 +104,7 @@ class FetchApiService
     private static function fetchErrors(GuzzleException $e)
     {
         $response = $e->getResponse();
+
         $data = json_decode($response->getBody(), true);
 
         $errorMessages = [];
@@ -103,12 +115,12 @@ class FetchApiService
         }
 
         $errorString = implode(PHP_EOL, $errorMessages);
-        print_r("Error {$e->getCode()}" . PHP_EOL . $errorString . PHP_EOL);
+        print_r("Error: {$e->getCode()}" . PHP_EOL . $errorString . PHP_EOL);
     }
 
-    private static function checkRetries(int $retryCount)
+    private static function checkRetries(int $retryCount, int $maxRetries)
     {
-        if ($retryCount >= self::maxRetries) throw new Exception('Max retry limit reached');
+        if ($retryCount >= $maxRetries) throw new Exception('Max retry limit reached');
     }
 
     private static function fetchResponse(ResponseInterface $response, Account $account): array
@@ -127,7 +139,7 @@ class FetchApiService
     {
         $name = class_basename($model);
         $pageCount = $data['meta']['last_page'];
-        print_r("$name: page $page of $pageCount imported successfully ($account->name, $apiService->name)" . PHP_EOL);
+        print_r("$name: page $page of $pageCount imported successfully (account: $account->name, api: $apiService->name)" . PHP_EOL);
     }
 }
 

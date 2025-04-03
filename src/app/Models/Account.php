@@ -18,4 +18,9 @@ class Account extends Model
     {
         return $this->hasMany(ApiToken::class);
     }
+
+    public function getApiTokenForService(int $serviceId): ?ApiToken
+    {
+        return $this->apiTokens->where('api_service_id', $serviceId)->first();
+    }
 }
