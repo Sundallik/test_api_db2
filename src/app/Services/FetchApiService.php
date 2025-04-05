@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Database\Eloquent\Model;
 use Psr\Http\Message\ResponseInterface;
 
 class FetchApiService
@@ -25,57 +26,54 @@ class FetchApiService
         $page = 1;
         $retryCount = 0;
         $currentDelay = $initialDelay;
-        $uniqueColumn = $model::getUniqueColumn();
+        $model = app()->make($model);
+        $uniqueColumns = $model::getUniqueColumns();
+        $client = self::createClient($apiService);
 
         do {
             self::checkRetries($retryCount, $maxRetries);
-            $client = self::createClient($apiService);
 
             try {
                 $queryParams['page'] = $page;
-
                 $response = $client->get($endpoint, [
                     'query' => $queryParams,
                     'http_errors' => true,
-                    'headers' => [
-                        'Accept' => 'application/json'
-                    ],
+                    'headers' => ['Accept' => 'application/json'],
                 ]);
 
                 $retryCount = 0;
                 $currentDelay = $initialDelay;
 
                 $data = self::fetchResponse($response, $account);
+                $response = null;
 
-                $groupedLatest = collect($data['data'])
-                    ->groupBy($uniqueColumn)
-                    ->map(function ($group) {
-                        return $group->map(function ($item) {
-                            $item['date'] = Carbon::parse($item['date']);
-                            return $item;
-                        })
-                        ->sortBy('date')->last();
-                    });
+                $latestRecords = collect($data['data'])
+                    ->map(function ($item) {
+                        $item['date'] = Carbon::parse($item['date'])->toDateTimeString();
+                        return $item;
+                    })
+                    ->sortByDesc('date')
+                    ->unique(function ($item) use ($uniqueColumns) {
+                        $result = '';
+                        foreach ($uniqueColumns as $column) {
+                            $result .= $item[$column] ?? 'null';
+                        }
+                        return $result;
+                    })
+                    ->values()
+                    ->all();
 
-                $existingRecords = $model::whereIn($uniqueColumn, $groupedLatest->pluck($uniqueColumn))
-                    ->where('account_id', $account->id)->get()->keyBy($uniqueColumn);
-
-                $recordsToUpsert = $groupedLatest->filter(function ($item) use ($existingRecords, $uniqueColumn) {
-                    $key = $item[$uniqueColumn];
-                    if (!$existingRecords->has($key)) return true;
-                    return $item['date']->gte($existingRecords->get($key)->date);
-                })->toArray();
-
-                if (!empty($recordsToUpsert)) {
+                if (!empty($latestRecords)) {
                     $model::upsert(
-                        $recordsToUpsert,
-                        [$uniqueColumn, 'account_id'],
+                        $latestRecords,
+                        $uniqueColumns,
                         $model::getUpdatableColumns()
                     );
-                };
+                }
 
                 self::printLog($model, $data, $page, $account, $apiService);
                 $page++;
+                gc_collect_cycles();
             } catch (GuzzleException $e) {
                 switch($e->getCode()) {
                     case 400:
@@ -90,6 +88,13 @@ class FetchApiService
                     default:
                         self::fetchErrors($e);
                 }
+            }  finally {
+                if (isset($response)) {
+                    $response->getBody()->close();
+                    unset($response);
+                }
+                unset($data['data'], $latestRecords);
+                gc_collect_cycles();
             }
         } while (isset($data['links']['next']));
     }
@@ -135,11 +140,12 @@ class FetchApiService
         return $data;
     }
 
-    private static function printLog(string $model, array $data, int $page, Account $account, ApiService $apiService)
+    private static function printLog(Model $model, array $data, int $page, Account $account, ApiService $apiService)
     {
         $name = class_basename($model);
         $pageCount = $data['meta']['last_page'];
-        print_r("$name: page $page of $pageCount imported successfully (account: $account->name, api: $apiService->name)" . PHP_EOL);
+
+        print_r("$name: page $page of $pageCount imported successfully (account: $account->name, api: $apiService->name)" . " " . round(memory_get_usage() / 1024 / 1024, 2) . ' MB' . PHP_EOL);
     }
 }
 

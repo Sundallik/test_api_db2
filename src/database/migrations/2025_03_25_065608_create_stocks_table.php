@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
             $table->string('tech_size')->nullable();
-            $table->bigInteger('barcode')->index()->nullable();
+            $table->bigInteger('barcode')->nullable();
             $table->integer('quantity')->default(0)->nullable();
             $table->boolean('is_supply')->default(true)->nullable();
             $table->boolean('is_realization')->default(false)->nullable();
@@ -33,9 +33,9 @@ return new class extends Migration
             $table->decimal('price', 10, 2)->nullable();
             $table->decimal('discount', 10, 2)->default(0)->nullable();
 
-            $table->foreignId('account_id')->constrained('accounts');
+            $table->foreignId('account_id')->index()->constrained('accounts');
 
-            $table->unique(['barcode', 'nm_id', 'account_id']);
+            $table->unique(['barcode', 'warehouse_name', 'account_id']);
         });
     }
 

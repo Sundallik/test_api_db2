@@ -3,9 +3,9 @@
 namespace App\Models;
 trait ColumnsForUpsert
 {
-    public static function getUniqueColumn(): string
+    public static function getUniqueColumns(): array
     {
-        return static::$uniqueColumn ?? '';
+        return static::$uniqueColumns ?? [];
     }
 
     public static function getUpdatableColumns(): array

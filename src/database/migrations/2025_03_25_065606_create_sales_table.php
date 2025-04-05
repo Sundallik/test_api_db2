@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->string('g_number')->index()->nullable();
+            $table->string('g_number')->nullable();
             $table->date('date')->index()->nullable();
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->string('brand')->nullable();
             $table->boolean('is_storno')->nullable();
 
-            $table->foreignId('account_id')->constrained('accounts');
+            $table->foreignId('account_id')->index()->constrained('accounts');
 
             $table->unique(['sale_id', 'account_id']);
         });

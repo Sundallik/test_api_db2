@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->string('g_number')->index()->nullable();
+            $table->string('g_number')->nullable();
             $table->dateTime('date')->index()->nullable();
             $table->date('last_change_date')->nullable();
             $table->string('supplier_article')->nullable();
@@ -32,9 +32,9 @@ return new class extends Migration
             $table->boolean('is_cancel')->default(false)->nullable();
             $table->dateTime('cancel_dt')->nullable();
 
-            $table->foreignId('account_id')->constrained('accounts');
+            $table->foreignId('account_id')->index()->constrained('accounts');
 
-            $table->unique(['g_number', 'supplier_article', 'income_id', 'account_id']);
+            $table->unique(['g_number', 'barcode', 'account_id']);
         });
     }
 
