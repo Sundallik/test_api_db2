@@ -93,7 +93,7 @@ class FetchApiService
                     $response->getBody()->close();
                     unset($response);
                 }
-                unset($data['data'], $latestRecords);
+                if (isset($data)) unset($data['data'], $latestRecords);
                 gc_collect_cycles();
             }
         } while (isset($data['links']['next']));
@@ -145,7 +145,7 @@ class FetchApiService
         $name = class_basename($model);
         $pageCount = $data['meta']['last_page'];
 
-        print_r("$name: page $page of $pageCount imported successfully (account: $account->name, api: $apiService->name)" . " " . round(memory_get_usage() / 1024 / 1024, 2) . ' MB' . PHP_EOL);
+        print_r("$name: page $page of $pageCount imported successfully (account: $account->name, api: $apiService->name)" . PHP_EOL);
     }
 }
 
